@@ -1,0 +1,108 @@
+<div class="flex h-screen w-screen font-sans text-slate-100 bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-950">
+
+  <!-- Sidebar gauche -->
+  <div class="w-1/4 max-w-xs bg-purple-800/80 p-6 flex flex-col items-center gap-6 shadow-inner backdrop-blur-sm">
+
+    <div class="text-2xl text-center">
+      Mana: {{ mana | number:'1.1-1' }}
+    </div>
+
+    <div class="text-2xl text-center">
+      (MPS: {{ totalMPS | number:'1.1-1' }})
+    </div>
+
+    <button (click)="onClickArea($event)"
+    class="bg-purple-600 text-white px-8 py-5 text-xl rounded-2xl shadow-lg shadow-purple-700 mt-4 active:scale-95 transition hover:bg-purple-600/60 focus:outline-none focus:ring-4 focus:ring-purple-500/50">
+      ✨ Cast Spell
+    </button>
+
+    @if (showValue) {
+      <div
+        class="absolute text-white text-lg font-bold pointer-events-none animate-float z-50"
+        [style.left.px]="floatX"
+        [style.top.px]="floatY"
+      >
+        +{{ manaPerClick }}
+      </div>
+    }
+
+
+    <div class= "w-full h-80 bg-purple-600 rounded-2xl">
+      <p class="text-2xl text-center bg-purple-900 rounded-t-2xl py-2 mb-4">Store</p>
+
+        <div class="shop-container flex flex-wrap justify-around h-60 gap-2 max-w-full text-black overflow-y-auto">
+          @for( upgrade of upgrades; track upgrade.name) {
+            @if (!upgrade.purchased && mana >= upgrade.cost - 500) {
+              <button
+                (click)="buyUpgrade(upgrade)"
+                [disabled]="mana < upgrade.cost"
+                [title]="upgrade.description + ' (Cost: ' + upgrade.cost + ')'"
+                class="w-20 h-20 rounded-lg text-white transition duration-200"
+                [ngClass]="{
+                  'bg-purple-500 hover:bg-purple-400 cursor-pointer': mana >= upgrade.cost,
+                  'bg-purple-700 opacity-40 cursor-default': mana < upgrade.cost
+                }">
+                {{ upgrade.name }}
+              </button>
+            }
+          }
+
+      </div>
+    </div>
+
+    <div class="w-28 h-28 bg-gradient-radial from-purple-500 to-purple-900 rounded-full border-4 border-purple-400 relative overflow-hidden shadow-lg mt-auto">
+      <div class="absolute bottom-0 left-0 w-full bg-blue-200/70 transition-all duration-300 ease-in-out"
+           [style.height.%]="crystalFillPercent"></div>
+    </div>
+
+    <span class="mt-2 text-sm text-slate-300">{{ clickPerSecond }} CPS</span>
+    <div class="text-sm text-slate-300">Click Power: {{ manaPerClick }}</div>
+
+    <button (click)="resetGame()"
+            class="px-6 py-3 mt-4 text-lg bg-red-600 text-white rounded-xl hover:bg-red-700">
+      🔁 Reset Game
+    </button>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="flex-1 flex flex-col items-center p-8 max-h-screen overflow-y-auto bg-purple-800">
+    <h1 class="text-5xl mb-6">🔮 Mana Clicker</h1>
+
+    <div class="w-full max-w-5xl space-y-4">
+      @for (gen of visibleBuyables; track gen.name) {
+        <div class="bg-purple-700 p-4 rounded-xl shadow-md flex justify-between items-center">
+          <div>
+            <div class="font-semibold text-lg">{{ gen.name }}</div>
+            <div class="text-sm">
+              {{ gen.count }} owned |
+              {{ gen.type === 'click' ? '+' + gen.clickBoost + ' click power' : gen.mps + ' mana/sec' }} |
+              Cost: {{ gen.cost }}
+            </div>
+          </div>
+          <button (click)="buyGenerator(gen)"
+                  [disabled]="mana < gen.cost"
+                  class="bg-purple-900 px-4 py-2 rounded-lg text-white hover:bg-purple-600/80 disabled:opacity-40">
+            Buy
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Sidebar droite (log) -->
+  <div class="w-1/5 max-w-xs bg-purple-900/80 p-6 flex flex-col shadow-inner backdrop-blur-sm">
+    <h3 class="text-xl font-semibold mb-4 text-center">📜 Log</h3>
+    <div class="text-sm text-slate-300 max-h-full overflow-y-auto border-l-4 border-purple-500 pl-4 space-y-1">
+      @for (entry of log; track entry) {
+        <div>{{ entry }}</div>
+      }
+    </div>
+
+    @if (log.length > 0) {
+      <button class="bg-purple-900 px-4 py-2 mt-8 rounded-lg text-white hover:bg-purple-100 cursor-pointer" (click)="clearLog()">
+        <span>Clear Log</span>
+      </button>
+    }
+  </div>
+
+</div>
