@@ -1,0 +1,191 @@
+<div class="flex flex-col h-screen w-screen bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-950 text-slate-100 font-sans">
+
+  <!-- Header Settings flottant -->
+  <div class="absolute top-0 left-0 z-50 p-4">
+    <button (click)="showSettings = true"
+            class="text-white text-3xl font-bold px-3 py-1 bg-transparent shadow-none hover:bg-white/10 active:scale-95 transition">
+      ⚙️
+    </button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="flex-1 overflow-y-auto">
+
+    @if (activeTab === 'mana') {
+      <div class="flex flex-col justify-center items-center px-4 pt-4 pb-20 h-full">
+        <div class="text-3xl text-center m-2">Mana:
+          <p class="mt-4">
+          {{  mana | number:'1.1-1' }}
+          </p>
+        </div>
+        <div class="text-lg text-center mb-6">(MPS: {{  totalMPS | number:'1.1-1' }})</div>
+
+        <div class="flex flex-col justify-center items-center flex-grow w-full"
+             (click)="triggerCast.emit()">
+          <div class="w-64 h-64 bg-gradient-radial from-purple-500 to-purple-900 rounded-full border-4 border-purple-400 relative overflow-hidden shadow-lg">
+            <div class="absolute bottom-0 left-0 w-full bg-blue-200/70 transition-all duration-300 ease-in-out"
+                 [style.height.%]="crystalFillPercent"></div>
+          </div>
+
+          <span class="mt-6 text-base text-slate-300">{{ clickPerSecond }} CPS</span>
+          <div class="text-base text-slate-300">Click Power: {{ manaPerClick }}</div>
+        </div>
+      </div>
+    }
+
+    @if (activeTab === 'store') {
+      <div class="p-4 space-y-4">
+        <div class="text-center text-3xl font-semibold mb-10">🛒 Store</div>
+        <div class="w-full max-w-5xl space-y-4">
+          @for (gen of buyables; track gen.name) {
+            <div [ngClass]="mana >= gen.cost ? 'bg-purple-900 shadow-lg' : 'bg-purple-700 opacity-90'"
+                 class="p-4 rounded-xl flex justify-between items-center transition-all">
+              <div>
+                <div class="font-semibold text-lg">{{ gen.name }}</div>
+                <div class="text-sm">
+                  {{ gen.count }} owned |
+                  {{ gen.type === 'click' ? '+' + gen.clickBoost + ' click power' : gen.mps + ' mana/sec' }} |
+                  Cost: {{ gen.cost }}
+                </div>
+              </div>
+
+              <button (click)="buyItem.emit(gen)"
+                      [disabled]="mana < gen.cost"
+                      class="text-white rounded-xl text-base font-semibold px-6 py-4 transition-all
+                         bg-purple-800 hover:bg-purple-600/90 disabled:opacity-40 disabled:cursor-not-allowed">
+                Buy
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (activeTab === 'upgrades') {
+      <div class="p-4 space-y-4">
+        <div class="text-center text-3xl font-semibold mb-10">🔧 Upgrades</div>
+        <div class="w-full max-w-5xl space-y-4">
+          @for (upgrade of upgrades; track upgrade.name) {
+            @if (showUpgrade(upgrade)) {
+              <div [ngClass]="upgIsActive(upgrade) ? 'bg-purple-900 shadow-lg' : 'bg-purple-700 opacity-90'"
+                   class="p-4 rounded-xl flex justify-between items-center transition-all">
+
+                <div>
+                  <div class="font-semibold text-lg">
+                    {{ upgrade.name }} -
+                    <span class="text-sm text-slate-300">{{ upgrade.cost }}</span>
+                  </div>
+                  <div class="text-sm text-slate-200">{{ upgrade.description }}</div>
+
+                </div>
+
+                <button (click)="buyUpgrade.emit(upgrade)"
+                        [disabled]="!canBuyUpgrade(upgrade)"
+                        class="text-white rounded-xl text-base font-semibold px-6 py-4 transition-all
+                           bg-purple-800 hover:bg-purple-600/90 disabled:opacity-40 disabled:cursor-not-allowed">
+                  Buy
+                </button>
+              </div>
+            }
+          }
+
+          @if (!hasVisibleUpgrades()) {
+            <div class="w-full text-center text-white italic mt-4">
+              🧙‍♂️ Out of Stock — all upgrades purchased!
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (activeTab === 'logs') {
+      <div class="flex flex-col h-full px-4 pt-4 pb-4">
+        <h3 class="text-3xl font-semibold mb-10 text-center">📜 Log</h3>
+
+        <!-- Log scrollable -->
+        <div class="flex-1 overflow-y-auto space-y-1 border border-white/10 rounded-xl p-3 bg-purple-800/20 text-sm">
+          @for (entry of log; track entry) {
+            <div> <span class="text-xl">{{ entry }}</span></div>
+          }
+        </div>
+
+        <!-- Bouton aligné bas -->
+        <button (click)="clearLog.emit()"
+                class="mt-4 w-full bg-red-600 text-white py-3 rounded-xl hover:bg-red-700 transition">
+          Clear Log
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Footer TabBar -->
+  <div class="flex justify-around items-center bg-purple-950 p-3 border-t border-purple-700">
+    <button (click)="activeTab = 'mana'"
+            class="text-center flex-1 py-2 transition rounded-xl"
+            [ngClass]="{
+          'bg-purple-800/50': activeTab === 'mana',
+          'bg-transparent': activeTab !== 'mana'
+        }">
+      <div class="text-2xl">🪄</div>
+      <div class="text-sm">Mana</div>
+    </button>
+
+    <button (click)="activeTab = 'store'"
+            class="text-center flex-1 py-2 transition rounded-xl"
+            [ngClass]="{
+          'bg-purple-800/50': activeTab === 'store',
+          'bg-transparent': activeTab !== 'store'
+        }">
+      <div class="text-2xl">🏪</div>
+      <div class="text-sm">Store</div>
+    </button>
+
+    <button (click)="activeTab = 'upgrades'"
+            class="text-center flex-1 py-2 transition rounded-xl"
+            [ngClass]="{
+          'bg-purple-800/50': activeTab === 'upgrades',
+          'bg-transparent': activeTab !== 'upgrades'
+        }">
+      <div class="text-2xl">📜</div>
+      <div class="text-sm">Upgrade</div>
+    </button>
+
+    <button (click)="activeTab = 'logs'"
+            class="text-center flex-1 py-2 transition rounded-xl"
+            [ngClass]="{
+          'bg-purple-800/50': activeTab === 'logs',
+          'bg-transparent': activeTab !== 'logs'
+        }">
+      <div class="text-2xl">🔮</div>
+      <div class="text-sm">Logs</div>
+    </button>
+
+  </div>
+
+  @if (showSettings) {
+    <!-- Clic en dehors ferme le modal -->
+    <div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-2"
+         (click)="showSettings = false">
+
+      <!-- Empêche la fermeture si clic à l'intérieur -->
+      <div class="bg-gradient-to-br from-purple-900 via-purple-950 to-indigo-950 text-white rounded-2xl p-6 shadow-2xl w-full max-w-xs mx-auto space-y-6"
+           (click)="$event.stopPropagation()">
+
+        <h2 class="text-3xl font-bold text-center mb-6 tracking-wide">Settings</h2>
+
+        <button (click)="onResetConfirm()"
+                class="w-full flex items-center justify-center gap-2 bg-red-500 text-white text-2xl font-semibold py-4 rounded-xl shadow hover:bg-red-700 active:scale-95 transition">
+          <span>🔄</span>
+          <span>Reset Game</span>
+        </button>
+
+        <button (click)="showSettings = false"
+                class="w-full flex items-center justify-center gap-2 bg-purple-800 text-white text-xl font-medium py-3 rounded-xl shadow-md hover:bg-purple-700 active:scale-95 transition duration-200">
+          <span>🗙</span>
+          <span>Close</span>
+        </button>
+      </div>
+    </div>
+  }
+
+</div>

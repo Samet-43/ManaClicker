@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, HostListener, OnInit} from '@angular/core';
 import {DecimalPipe, NgClass} from '@angular/common';
 import {MANA_PER_CLICK, START_WITH_MANA} from '../../core/constants/game.constants';
 import {LOCAL_STORAGE_MANA_GAME} from '../../core/constants/localStorage.constants';
+import {MobileMainPage} from '../mobile-main-page/mobile-main-page';
 
 interface Buyable {
   name: string;
@@ -9,7 +10,7 @@ interface Buyable {
   cost: number;
   mps: number;
   count: number;
-  type: 'gen' | 'click';
+  type: 'buy' | 'click';
   clickBoost?: number;
 }
 
@@ -17,7 +18,7 @@ interface Upgrade {
   name: string;
   description: string;
   cost: number;
-  type: 'click' | 'gen';
+  type: 'buy' | 'click';
   target?: string;
   multiplier: number;
   purchased: boolean;
@@ -29,11 +30,13 @@ interface Upgrade {
   imports: [
     DecimalPipe,
     NgClass,
+    MobileMainPage,
   ],
   templateUrl: './main-page.html',
   styleUrl: './main-page.css'
 })
 export class MainPage implements OnInit {
+
   mana = START_WITH_MANA;
   manaPerClick = MANA_PER_CLICK;
   recentClicks: number[] = [];
@@ -45,79 +48,82 @@ export class MainPage implements OnInit {
 
 
   buyables: Buyable[] = [
-    { name: "Apprentice", baseCost: 15, cost: 15, mps: 0.2, count: 0, type: "gen" },
-    { name: "Mage", baseCost: 50, cost: 50, mps: 1, count: 0, type: "gen" },
-    { name: "Enchanter", baseCost: 150, cost: 150, mps: 5, count: 0, type: "gen" },
-    { name: "Spell Factory", baseCost: 500, cost: 500, mps: 20, count: 0, type: "gen" },
-    { name: "Arcane Golem", baseCost: 2500, cost: 2500, mps: 100, count: 0, type: "gen" },
-    { name: "Ethereal Core", baseCost: 15000, cost: 15000, mps: 500, count: 0, type: "gen" },
-    { name: "Chrono Wizard", baseCost: 90000, cost: 90000, mps: 2500, count: 0, type: "gen" },
-    { name: "Runestone Forge", baseCost: 500000, cost: 500000, mps: 10000, count: 0, type: "gen" },
-    { name: "Arcane Rift", baseCost: 2500000, cost: 2500000, mps: 50000, count: 0, type: "gen" },
-    { name: "Mana Reactor", baseCost: 1e7, cost: 1e7, mps: 200000, count: 0, type: "gen" },
-    { name: "Arcane Bloom", baseCost: 5e7, cost: 5e7, mps: 400000, count: 0, type: "gen" },
-    { name: "Mana Leech", baseCost: 2e8, cost: 2e8, mps: 800000, count: 0, type: "gen" },
-    { name: "Crystal Engine", baseCost: 8e8, cost: 8e8, mps: 1.6e6, count: 0, type: "gen" },
-    { name: "Runic Beacon", baseCost: 3e9, cost: 3e9, mps: 3.2e6, count: 0, type: "gen" },
-    { name: "Spirit Collector", baseCost: 1.2e10, cost: 1.2e10, mps: 6.4e6, count: 0, type: "gen" },
-    { name: "Witch's Circle", baseCost: 5e10, cost: 5e10, mps: 1.28e7, count: 0, type: "gen" },
-    { name: "Astral Harvester", baseCost: 2e11, cost: 2e11, mps: 2.56e7, count: 0, type: "gen" },
-    { name: "Sigil Crafter", baseCost: 8e11, cost: 8e11, mps: 5.12e7, count: 0, type: "gen" },
-    { name: "Mana Tree", baseCost: 3e12, cost: 3e12, mps: 1.02e8, count: 0, type: "gen" },
-    { name: "Occult Furnace", baseCost: 1.2e13, cost: 1.2e13, mps: 2.04e8, count: 0, type: "gen" },
-    { name: "Phantom Orb", baseCost: 5e13, cost: 5e13, mps: 4.09e8, count: 0, type: "gen" },
-    { name: "Void Harvester", baseCost: 2e14, cost: 2e14, mps: 8.19e8, count: 0, type: "gen" },
-    { name: "Ether Pump", baseCost: 8e14, cost: 8e14, mps: 1.63e9, count: 0, type: "gen" },
-    { name: "Celestial Obelisk", baseCost: 3.2e15, cost: 3.2e15, mps: 3.27e9, count: 0, type: "gen" },
-    { name: "Spell Infuser", baseCost: 1.2e16, cost: 1.2e16, mps: 6.55e9, count: 0, type: "gen" },
-    { name: "Temporal Distorter", baseCost: 5e16, cost: 5e16, mps: 1.31e10, count: 0, type: "gen" },
-    { name: "Mana Nexus", baseCost: 2e17, cost: 2e17, mps: 2.62e10, count: 0, type: "gen" },
-    { name: "Arcane Drill", baseCost: 8e17, cost: 8e17, mps: 5.24e10, count: 0, type: "gen" },
-    { name: "Binding Altar", baseCost: 3.2e18, cost: 3.2e18, mps: 1.04e11, count: 0, type: "gen" },
-    { name: "Mythic Extractor", baseCost: 1.28e19, cost: 1.28e19, mps: 2.09e11, count: 0, type: "gen" },
+    { name: "Apprentice", baseCost: 15, cost: 15, mps: 0.2, count: 0, type: "buy" },
+    { name: "Mage", baseCost: 50, cost: 50, mps: 1, count: 0, type: "buy" },
+    { name: "Enchanter", baseCost: 150, cost: 150, mps: 5, count: 0, type: "buy" },
+    { name: "Spell Factory", baseCost: 500, cost: 500, mps: 20, count: 0, type: "buy" },
+    { name: "Arcane Golem", baseCost: 2500, cost: 2500, mps: 100, count: 0, type: "buy" },
+    { name: "Ethereal Core", baseCost: 15000, cost: 15000, mps: 500, count: 0, type: "buy" },
+    { name: "Chrono Wizard", baseCost: 90000, cost: 90000, mps: 2500, count: 0, type: "buy" },
+    { name: "Runestone Forge", baseCost: 500000, cost: 500000, mps: 10000, count: 0, type: "buy" },
+    { name: "Arcane Rift", baseCost: 2500000, cost: 2500000, mps: 50000, count: 0, type: "buy" },
+    { name: "Mana Reactor", baseCost: 1e7, cost: 1e7, mps: 200000, count: 0, type: "buy" },
+    { name: "Arcane Bloom", baseCost: 5e7, cost: 5e7, mps: 400000, count: 0, type: "buy" },
+    { name: "Mana Leech", baseCost: 2e8, cost: 2e8, mps: 800000, count: 0, type: "buy" },
+    { name: "Crystal Engine", baseCost: 8e8, cost: 8e8, mps: 1.6e6, count: 0, type: "buy" },
+    { name: "Runic Beacon", baseCost: 3e9, cost: 3e9, mps: 3.2e6, count: 0, type: "buy" },
+    { name: "Spirit Collector", baseCost: 1.2e10, cost: 1.2e10, mps: 6.4e6, count: 0, type: "buy" },
+    { name: "Witch's Circle", baseCost: 5e10, cost: 5e10, mps: 1.28e7, count: 0, type: "buy" },
+    { name: "Astral Harvester", baseCost: 2e11, cost: 2e11, mps: 2.56e7, count: 0, type: "buy" },
+    { name: "Sigil Crafter", baseCost: 8e11, cost: 8e11, mps: 5.12e7, count: 0, type: "buy" },
+    { name: "Mana Tree", baseCost: 3e12, cost: 3e12, mps: 1.02e8, count: 0, type: "buy" },
+    { name: "Occult Furnace", baseCost: 1.2e13, cost: 1.2e13, mps: 2.04e8, count: 0, type: "buy" },
+    { name: "Phantom Orb", baseCost: 5e13, cost: 5e13, mps: 4.09e8, count: 0, type: "buy" },
+    { name: "Void Harvester", baseCost: 2e14, cost: 2e14, mps: 8.19e8, count: 0, type: "buy" },
+    { name: "Ether Pump", baseCost: 8e14, cost: 8e14, mps: 1.63e9, count: 0, type: "buy" },
+    { name: "Celestial Obelisk", baseCost: 3.2e15, cost: 3.2e15, mps: 3.27e9, count: 0, type: "buy" },
+    { name: "Spell Infuser", baseCost: 1.2e16, cost: 1.2e16, mps: 6.55e9, count: 0, type: "buy" },
+    { name: "Temporal Distorter", baseCost: 5e16, cost: 5e16, mps: 1.31e10, count: 0, type: "buy" },
+    { name: "Mana Nexus", baseCost: 2e17, cost: 2e17, mps: 2.62e10, count: 0, type: "buy" },
+    { name: "Arcane Drill", baseCost: 8e17, cost: 8e17, mps: 5.24e10, count: 0, type: "buy" },
+    { name: "Binding Altar", baseCost: 3.2e18, cost: 3.2e18, mps: 1.04e11, count: 0, type: "buy" },
+    { name: "Mythic Extractor", baseCost: 1.28e19, cost: 1.28e19, mps: 2.09e11, count: 0, type: "buy" },
   ];
 
   upgrades: Upgrade[] = [
-    { name: "Click Upgrade I", description: "Double le pouvoir de clic", cost: 100, type: "click", multiplier: 2, purchased: false },
-    { name: "Click Upgrade II", description: "Double le pouvoir de clic", cost: 500, type: "click", multiplier: 2, purchased: false },
-    { name: "Click Upgrade III", description: "Double le pouvoir de clic", cost: 5000, type: "click", multiplier: 2, purchased: false },
-    { name: "Click Upgrade IV", description: "Double le pouvoir de clic", cost: 25000, type: "click", multiplier: 2, purchased: false },
-    { name: "Click Upgrade V", description: "Double le pouvoir de clic", cost: 100000, type: "click", multiplier: 2, purchased: false },
-    { name: "Click Upgrade VI", description: "Double le pouvoir de clic", cost: 500000, type: "click", multiplier: 2, purchased: false },
-    { name: "Click Upgrade VII", description: "Double le pouvoir de clic", cost: 1500000, type: "click", multiplier: 2, purchased: false },
-    { name: "Click Upgrade VIII", description: "Double le pouvoir de clic", cost: 5000000, type: "click", multiplier: 2, purchased: false },
-    { name: "Click Upgrade IX", description: "Double le pouvoir de clic", cost: 15000000, type: "click", multiplier: 2, purchased: false },
-    { name: "Click Upgrade X", description: "Double le pouvoir de clic", cost: 50000000, type: "click", multiplier: 2, purchased: false },
-    { name: "Apprentice Upgrade", description: "Double la production d'Apprentice", cost: 500, type: "gen", target: "Apprentice", multiplier: 2, purchased: false },
-    { name: "Mage Upgrade", description: "Double la production de Mage", cost: 2000, type: "gen", target: "Mage", multiplier: 2, purchased: false },
-    { name: "Enchanter Upgrade", description: "Double la production d'Enchanter", cost: 5000, type: "gen", target: "Enchanter", multiplier: 2, purchased: false },
-    { name: "Spell Factory Upgrade", description: "Double la production de Spell Factory", cost: 10000, type: "gen", target: "Spell Factory", multiplier: 2, purchased: false },
-    { name: "Arcane Golem Upgrade", description: "Double la production d'Arcane Golem", cost: 20000, type: "gen", target: "Arcane Golem", multiplier: 2, purchased: false },
-    { name: "Ethereal Core Upgrade", description: "Double la production d'Ethereal Core", cost: 40000, type: "gen", target: "Ethereal Core", multiplier: 2, purchased: false },
-    { name: "Chrono Wizard Upgrade", description: "Double la production de Chrono Wizard", cost: 60000, type: "gen", target: "Chrono Wizard", multiplier: 2, purchased: false },
-    { name: "Runestone Forge Upgrade", description: "Double la production de Runestone Forge", cost: 90000, type: "gen", target: "Runestone Forge", multiplier: 2, purchased: false },
-    { name: "Arcane Rift Upgrade", description: "Double la production d'Arcane Rift", cost: 135000, type: "gen", target: "Arcane Rift", multiplier: 2, purchased: false },
-    { name: "Mana Reactor Upgrade", description: "Double la production de Mana Reactor", cost: 210000, type: "gen", target: "Mana Reactor", multiplier: 2, purchased: false },
-    { name: "Arcane Bloom Upgrade", description: "Double la production d'Arcane Bloom", cost: 300000, type: "gen", target: "Arcane Bloom", multiplier: 2, purchased: false },
-    { name: "Mana Leech Upgrade", description: "Double la production de Mana Leech", cost: 480000, type: "gen", target: "Mana Leech", multiplier: 2, purchased: false },
-    { name: "Crystal Engine Upgrade", description: "Double la production de Crystal Engine", cost: 720000, type: "gen", target: "Crystal Engine", multiplier: 2, purchased: false },
-    { name: "Runic Beacon Upgrade", description: "Double la production de Runic Beacon", cost: 1200000, type: "gen", target: "Runic Beacon", multiplier: 2, purchased: false },
-    { name: "Spirit Collector Upgrade", description: "Double la production de Spirit Collector", cost: 1800000, type: "gen", target: "Spirit Collector", multiplier: 2, purchased: false },
-    { name: "Witch's Circle Upgrade", description: "Double la production de Witch's Circle", cost: 3000000, type: "gen", target: "Witch's Circle", multiplier: 2, purchased: false },
-    { name: "Astral Harvester Upgrade", description: "Double la production d'Astral Harvester", cost: 4500000, type: "gen", target: "Astral Harvester", multiplier: 2, purchased: false },
-    { name: "Sigil Crafter Upgrade", description: "Double la production de Sigil Crafter", cost: 6600000, type: "gen", target: "Sigil Crafter", multiplier: 2, purchased: false },
-    { name: "Mana Tree Upgrade", description: "Double la production de Mana Tree", cost: 10800000, type: "gen", target: "Mana Tree", multiplier: 2, purchased: false },
-    { name: "Occult Furnace Upgrade", description: "Double la production de Occult Furnace", cost: 18000000, type: "gen", target: "Occult Furnace", multiplier: 2, purchased: false },
-    { name: "Phantom Orb Upgrade", description: "Double la production de Phantom Orb", cost: 27000000, type: "gen", target: "Phantom Orb", multiplier: 2, purchased: false },
-    { name: "Void Harvester Upgrade", description: "Double la production de Void Harvester", cost: 42000000, type: "gen", target: "Void Harvester", multiplier: 2, purchased: false },
-    { name: "Ether Pump Upgrade", description: "Double la production de Ether Pump", cost: 66000000, type: "gen", target: "Ether Pump", multiplier: 2, purchased: false },
-    { name: "Celestial Obelisk Upgrade", description: "Double la production de Celestial Obelisk", cost: 96000000, type: "gen", target: "Celestial Obelisk", multiplier: 2, purchased: false },
-    { name: "Spell Infuser Upgrade", description: "Double la production de Spell Infuser", cost: 150000000, type: "gen", target: "Spell Infuser", multiplier: 2, purchased: false },
-    { name: "Temporal Distorter Upgrade", description: "Double la production de Temporal Distorter", cost: 240000000, type: "gen", target: "Temporal Distorter", multiplier: 2, purchased: false },
-    { name: "Mana Nexus Upgrade", description: "Double la production de Mana Nexus", cost: 360000000, type: "gen", target: "Mana Nexus", multiplier: 2, purchased: false },
-    { name: "Arcane Drill Upgrade", description: "Double la production de Arcane Drill", cost: 540000000, type: "gen", target: "Arcane Drill", multiplier: 2, purchased: false },
-    { name: "Binding Altar Upgrade", description: "Double la production de Binding Altar", cost: 720000000, type: "gen", target: "Binding Altar", multiplier: 2, purchased: false },
-    { name: "Mythic Extractor Upgrade", description: "Double la production de Mythic Extractor", cost: 1050000000, type: "gen", target: "Mythic Extractor", multiplier: 2, purchased: false }
+    // --- CLICK UPGRADES ---
+    { name: "Click Upgrade I", description: "Doubles click power", cost: 100, type: "click", multiplier: 2, purchased: false },
+    { name: "Click Upgrade II", description: "Doubles click power", cost: 500, type: "click", multiplier: 2, purchased: false },
+    { name: "Click Upgrade III", description: "Doubles click power", cost: 5000, type: "click", multiplier: 2, purchased: false },
+    { name: "Click Upgrade IV", description: "Doubles click power", cost: 2.5e4, type: "click", multiplier: 2, purchased: false },
+    { name: "Click Upgrade V", description: "Doubles click power", cost: 1e5, type: "click", multiplier: 0.2, purchased: false },
+    { name: "Click Upgrade VI", description: "Doubles click power", cost: 5e5, type: "click", multiplier: 2, purchased: false },
+    { name: "Click Upgrade VII", description: "Doubles click power", cost: 1.5e6, type: "click", multiplier: 2, purchased: false },
+    { name: "Click Upgrade VIII", description: "Doubles click power", cost: 5e6, type: "click", multiplier: 2, purchased: false },
+    { name: "Click Upgrade IX", description: "Doubles click power", cost: 1.5e7, type: "click", multiplier: 2, purchased: false },
+    { name: "Click Upgrade X", description: "Doubles click power", cost: 5e7, type: "click", multiplier: 0.5, purchased: false },
+
+    // --- BUYABLES UPGRADES ---
+    { name: "Apprentice Upgrade", description: "Doubles Apprentice production", cost: 3e2, type: "buy", target: "Apprentice", multiplier: 2, purchased: false },
+    { name: "Mage Upgrade", description: "Doubles Mage production", cost: 1e3, type: "buy", target: "Mage", multiplier: 2, purchased: false },
+    { name: "Enchanter Upgrade", description: "Doubles Enchanter production", cost: 3e3, type: "buy", target: "Enchanter", multiplier: 2, purchased: false },
+    { name: "Spell Factory Upgrade", description: "Doubles Spell Factory production", cost: 1e4, type: "buy", target: "Spell Factory", multiplier: 2, purchased: false },
+    { name: "Arcane Golem Upgrade", description: "Doubles Arcane Golem production", cost: 5e4, type: "buy", target: "Arcane Golem", multiplier: 2, purchased: false },
+    { name: "Ethereal Core Upgrade", description: "Doubles Ethereal Core production", cost: 3e5, type: "buy", target: "Ethereal Core", multiplier: 2, purchased: false },
+    { name: "Chrono Wizard Upgrade", description: "Doubles Chrono Wizard production", cost: 1.8e6, type: "buy", target: "Chrono Wizard", multiplier: 2, purchased: false },
+    { name: "Runestone Forge Upgrade", description: "Doubles Runestone Forge production", cost: 1e7, type: "buy", target: "Runestone Forge", multiplier: 2, purchased: false },
+    { name: "Arcane Rift Upgrade", description: "Doubles Arcane Rift production", cost: 5e7, type: "buy", target: "Arcane Rift", multiplier: 2, purchased: false },
+    { name: "Mana Reactor Upgrade", description: "Doubles Mana Reactor production", cost: 2e8, type: "buy", target: "Mana Reactor", multiplier: 2, purchased: false },
+    { name: "Arcane Bloom Upgrade", description: "Doubles Arcane Bloom production", cost: 1e9, type: "buy", target: "Arcane Bloom", multiplier: 2, purchased: false },
+    { name: "Mana Leech Upgrade", description: "Doubles Mana Leech production", cost: 4e9, type: "buy", target: "Mana Leech", multiplier: 2, purchased: false },
+    { name: "Crystal Engine Upgrade", description: "Doubles Crystal Engine production", cost: 1.6e10, type: "buy", target: "Crystal Engine", multiplier: 2, purchased: false },
+    { name: "Runic Beacon Upgrade", description: "Doubles Runic Beacon production", cost: 6e10, type: "buy", target: "Runic Beacon", multiplier: 2, purchased: false },
+    { name: "Spirit Collector Upgrade", description: "Doubles Spirit Collector production", cost: 2.4e11, type: "buy", target: "Spirit Collector", multiplier: 2, purchased: false },
+    { name: "Witch's Circle Upgrade", description: "Doubles Witch's Circle production", cost: 1e12, type: "buy", target: "Witch's Circle", multiplier: 2, purchased: false },
+    { name: "Astral Harvester Upgrade", description: "Doubles Astral Harvester production", cost: 4e12, type: "buy", target: "Astral Harvester", multiplier: 2, purchased: false },
+    { name: "Sigil Crafter Upgrade", description: "Doubles Sigil Crafter production", cost: 1.6e13, type: "buy", target: "Sigil Crafter", multiplier: 2, purchased: false },
+    { name: "Mana Tree Upgrade", description: "Doubles Mana Tree production", cost: 6e13, type: "buy", target: "Mana Tree", multiplier: 2, purchased: false },
+    { name: "Occult Furnace Upgrade", description: "Doubles Occult Furnace production", cost: 2.4e14, type: "buy", target: "Occult Furnace", multiplier: 2, purchased: false },
+    { name: "Phantom Orb Upgrade", description: "Doubles Phantom Orb production", cost: 1e15, type: "buy", target: "Phantom Orb", multiplier: 2, purchased: false },
+    { name: "Void Harvester Upgrade", description: "Doubles Void Harvester production", cost: 4e15, type: "buy", target: "Void Harvester", multiplier: 2, purchased: false },
+    { name: "Ether Pump Upgrade", description: "Doubles Ether Pump production", cost: 1.6e16, type: "buy", target: "Ether Pump", multiplier: 2, purchased: false },
+    { name: "Celestial Obelisk Upgrade", description: "Doubles Celestial Obelisk production", cost: 6.4e16, type: "buy", target: "Celestial Obelisk", multiplier: 2, purchased: false },
+    { name: "Spell Infuser Upgrade", description: "Doubles Spell Infuser production", cost: 2.4e17, type: "buy", target: "Spell Infuser", multiplier: 2, purchased: false },
+    { name: "Temporal Distorter Upgrade", description: "Doubles Temporal Distorter production", cost: 1e18, type: "buy", target: "Temporal Distorter", multiplier: 2, purchased: false },
+    { name: "Mana Nexus Upgrade", description: "Doubles Mana Nexus production", cost: 4e18, type: "buy", target: "Mana Nexus", multiplier: 2, purchased: false },
+    { name: "Arcane Drill Upgrade", description: "Doubles Arcane Drill production", cost: 1.6e19, type: "buy", target: "Arcane Drill", multiplier: 2, purchased: false },
+    { name: "Binding Altar Upgrade", description: "Doubles Binding Altar production", cost: 6.4e19, type: "buy", target: "Binding Altar", multiplier: 2, purchased: false },
+    { name: "Mythic Extractor Upgrade", description: "Doubles Mythic Extractor production", cost: 2.56e20, type: "buy", target: "Mythic Extractor", multiplier: 2, purchased: false }
   ];
 
   get visibleBuyables(): Buyable[] {
@@ -135,18 +141,65 @@ export class MainPage implements OnInit {
       this.log.unshift(`[${new Date().toLocaleTimeString()}] ✅ ${upg.name} acheté !`);
       if (this.log.length > 100) this.log.pop();
 
-      if (upg.type === 'click') {
-        this.manaPerClick *= upg.multiplier;
-      } else if (upg.type === 'gen' && upg.target) {
-        const target = this.buyables.find(g => g.name === upg.target);
-        if (target) target.mps *= upg.multiplier;
+      if (upg.name === 'Click Upgrade V' || upg.name === 'Click Upgrade X'){
+        this.manaPerClick = this.totalMPS * upg.multiplier;
       }
+
+      else{
+        if (upg.type === 'click') {
+          this.manaPerClick *= upg.multiplier;
+        } else if (upg.type === 'buy' && upg.target) {
+          const target = this.buyables.find(b => b.name === upg.target);
+          if (target) target.mps *= upg.multiplier;
+        }
+      }
+
     }
+  }
+
+  showUpgrade(upg: Upgrade): boolean {
+    if (upg.purchased) return false;
+    if (this.mana < upg.cost - 500) return false;
+
+    if (upg.type === 'buy' && upg.target) {
+      const target = this.buyables.find(b => b.name === upg.target);
+      return !!target && target.count > 0;
+    }
+
+    return true;
+  }
+
+  canBuyUpgrade(upgrade: Upgrade): boolean {
+    if (this.mana < upgrade.cost) return false;
+
+    if (upgrade.type === 'buy' && upgrade.target) {
+      const target = this.buyables.find(b => b.name === upgrade.target);
+      return !!target && target.count >= 10;
+    }
+
+    return true;
+  }
+
+  upgIsActive(upg: Upgrade): boolean {
+
+    if (upg.type === 'buy' && upg.target){
+    const target = this.buyables.find(b => b.name === upg.target);
+    const enoughMana= this.mana >= upg.cost;
+
+    return !!target && target.count >= 10 && enoughMana;
+    }
+    else{
+      return this.mana >= upg.cost;
+    }
+  }
+
+  hasVisibleUpgrades(): boolean {
+    return this.upgrades.some(upg => this.showUpgrade(upg));
   }
 
 
   get totalMPS(): number {
-    return this.buyables.reduce((total, gen) => total + (gen.mps * gen.count), 0);
+    return this.buyables.reduce((total, buy) => total + (buy.mps * buy.count), 0);
   }
 
   get clickPerSecond(): number {
@@ -165,7 +218,6 @@ export class MainPage implements OnInit {
     const now = Date.now();
     this.recentClicks.unshift(now);
 
-    const container = (event.currentTarget as HTMLElement).getBoundingClientRect();
     this.floatX = event.clientX;
     this.floatY = event.clientY - 10;
     this.showValue = true;
@@ -175,22 +227,22 @@ export class MainPage implements OnInit {
     }, 500);
   }
 
-  buyGenerator(generator: Buyable): void {
-    if (this.mana >= generator.cost) {
-      this.mana -= generator.cost;
-      generator.count++;
-      const newCost = Math.floor(generator.baseCost * Math.pow(1.15, generator.count));
+  buyBuyables(buyables: Buyable): void {
+    if (this.mana >= buyables.cost) {
+      this.mana -= buyables.cost;
+      buyables.count++;
+      const newCost = Math.floor(buyables.baseCost * Math.pow(1.15, buyables.count));
 
-      const message = generator.type === 'click'
-        ? `🔧 Amélioration achetée: ${generator.name} (+${generator.clickBoost} par clic)`
-        : `🧙 Amélioration acheté: (${generator.name})`;
+      const message = buyables.type === 'click'
+        ? `🔧 Amélioration achetée: ${buyables.name} (+${buyables.clickBoost} par clic)`
+        : `🧙 Amélioration acheté: (${buyables.name})`;
       this.log.unshift(`[${new Date().toLocaleTimeString()}] ${message}`);
       if (this.log.length > 100) this.log.pop();
 
-      generator.cost = newCost;
+      buyables.cost = newCost;
 
-      if (generator.type === 'click' && generator.clickBoost) {
-        this.manaPerClick += generator.clickBoost;
+      if (buyables.type === 'click' && buyables.clickBoost) {
+        this.manaPerClick += buyables.clickBoost;
       }
     }
   }
@@ -201,15 +253,16 @@ export class MainPage implements OnInit {
     this.log = [];
   }
 
+
   saveGame(): void {
     const gameData = {
       mana: this.mana,
       manaPerClick: this.manaPerClick,
       recentClicks: this.recentClicks,
       log: this.log,
-      buyables: this.buyables.map(g => ({
-        count: g.count,
-        cost: g.cost
+      buyables: this.buyables.map(b => ({
+        count: b.count,
+        cost: b.cost
       })),
       upgrades: this.upgrades.map(u => ({
         name: u.name,
@@ -221,36 +274,34 @@ export class MainPage implements OnInit {
 
   loadGame(): void {
     const savedData = localStorage.getItem(LOCAL_STORAGE_MANA_GAME);
+
     if (savedData) {
       const gameData = JSON.parse(savedData);
       this.mana = gameData.mana || 0;
       this.manaPerClick = gameData.manaPerClick || 1;
       this.recentClicks = gameData.recentClicks || [];
       this.log = gameData.log || [];
-
-      gameData.buyables?.forEach((savedGen: any, i: number) => {
+      gameData.buyables?.forEach((savedBuy: any, i: number) => {
         if (this.buyables[i]) {
-          this.buyables[i].count = savedGen.count;
-          this.buyables[i].cost = savedGen.cost;
+          this.buyables[i].count = savedBuy.count;
+          this.buyables[i].cost = savedBuy.cost;
         }
       });
 
-      gameData.upgrades?.forEach((savedUpg: any) => {
-        const upgrade = this.upgrades.find(u => u.name === savedUpg.name);
-        if (upgrade && savedUpg.purchased) {
+      gameData.upgrades?.forEach((savedUpb: any) => {
+        const upgrade = this.upgrades.find(u => u.name === savedUpb.name);
+        if (upgrade && savedUpb.purchased) {
           upgrade.purchased = true;
 
-          // Réappliquer les effets
-          if (upgrade.type === 'click') {
-            this.manaPerClick *= upgrade.multiplier;
-          } else if (upgrade.type === 'gen' && upgrade.target) {
-            const target = this.buyables.find(g => g.name === upgrade.target);
+          if (upgrade.type === 'buy' && upgrade.target) {
+            const target = this.buyables.find(b => b.name === upgrade.target);
             if (target) {
               target.mps *= upgrade.multiplier;
             }
           }
         }
       });
+
     }
   }
 
@@ -273,11 +324,20 @@ export class MainPage implements OnInit {
     localStorage.removeItem(LOCAL_STORAGE_MANA_GAME);
   }
 
+  @HostListener('window:beforeunload')
+  handleBeforeunload() {
+    this.saveGame()
+  }
+
   ngOnInit(): void {
     this.loadGame();
     setInterval(() => {
       this.mana += this.totalMPS;
       this.saveGame();
     }, 1000);
+  }
+
+  onClickMobile(): void {
+    this.onClickArea(new MouseEvent('click', { clientX: 0, clientY: 0 }));
   }
 }
