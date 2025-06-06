@@ -5,11 +5,11 @@
   <div class="w-1/4 max-w-xs bg-purple-800/80 p-6 flex flex-col items-center gap-6 shadow-inner backdrop-blur-sm">
 
     <div class="text-2xl text-center">
-      Mana: {{ mana | number:'1.1-1' }}
+      Mana: {{ mana | numberSuffix }}
     </div>
 
     <div class="text-2xl text-center">
-      (MPS: {{ totalMPS | number:'1.1-1' }})
+      (MPS: {{ totalMPS | numberSuffix }})
     </div>
 
     <button (click)="onClickArea($event)"
@@ -23,7 +23,7 @@
         [style.left.px]="floatX"
         [style.top.px]="floatY"
       >
-        +{{ manaPerClick }}
+        +{{ manaPerClick | numberSuffix }}
       </div>
     }
 
@@ -63,7 +63,7 @@
     </div>
 
     <span class="mt-2 text-sm text-slate-300">{{ clickPerSecond }} CPS</span>
-    <div class="text-sm text-slate-300">Click Power: {{ manaPerClick }}</div>
+    <div class="text-sm text-slate-300">Click Power: {{ manaPerClick | numberSuffix }}</div>
 
     <button (click)="resetGame()"
             class="px-6 py-3 mt-4 text-lg bg-red-600 text-white rounded-xl hover:bg-red-700">
@@ -72,24 +72,53 @@
   </div>
 
   <!-- Contenu principal -->
-  <div class="flex-1 flex flex-col items-center p-8 max-h-screen overflow-y-auto bg-purple-800">
-    <h1 class="text-5xl mb-6">🔮 Mana Clicker</h1>
+  <div class="flex-1 flex flex-col items-center max-h-screen overflow-y-auto bg-purple-800">
+    <h1 class="text-5xl py-12 pt-6 sticky text-center w-full top-0 bg-purple-800 z-10">
+      🔮 Mana Clicker
+    </h1>
 
-    <div class="w-full max-w-5xl space-y-4">
-      @for (gen of visibleBuyables; track gen.name) {
+    <div class="flex justify-center gap-2 mb-6 mt-2">
+      <button (click)="setBuyMultiplier(1)"
+              [ngClass]="{
+            'bg-purple-600 text-white': buyMultiplier === 1,
+            'bg-purple-700 text-gray-300': buyMultiplier !== 1
+          }"
+              class="px-3 py-1 rounded-md text-sm transition">
+        x1
+      </button>
+      <button (click)="setBuyMultiplier(10)"
+              [ngClass]="{
+            'bg-purple-600 text-white': buyMultiplier === 10,
+            'bg-purple-700 text-gray-300': buyMultiplier !== 10
+          }"
+              class="px-3 py-1 rounded-md text-sm transition">
+        x10
+      </button>
+      <button (click)="setBuyMultiplier(100)"
+              [ngClass]="{
+            'bg-purple-600 text-white': buyMultiplier === 100,
+            'bg-purple-700 text-gray-300': buyMultiplier !== 100
+          }"
+              class="px-3 py-1 rounded-md text-sm transition">
+        x100
+      </button>
+    </div>
+
+    <div class="w-full max-w-5xl space-y-4 pb-6">
+      @for (buy of visibleBuyables; track buy.name) {
         <div class="bg-purple-700 p-4 rounded-xl shadow-md flex justify-between items-center">
           <div>
-            <div class="font-semibold text-lg">{{ gen.name }}</div>
+            <div class="font-semibold text-lg">{{ buy.name }}</div>
             <div class="text-sm">
-              {{ gen.count }} owned |
-              {{ gen.type === 'click' ? '+' + gen.clickBoost + ' click power' : gen.mps + ' mana/sec' }} |
-              Cost: {{ gen.cost }}
+              {{ buy.count }} owned |
+              {{ buy.type === 'click' ? '+' + buy.clickBoost + ' click power' : (buy.mps | numberSuffix) + ' mana/sec' }} |
+              Cost: {{ GetTotalBuyCost(buy) | numberSuffix }}
             </div>
           </div>
-          <button (click)="buyBuyables(gen)"
-                  [disabled]="mana < gen.cost"
+          <button (click)="buyBuyables(buy)"
+                  [disabled]="mana < GetTotalBuyCost(buy)"
                   class="bg-purple-900 px-4 py-2 rounded-lg text-white hover:bg-purple-600/80 disabled:opacity-40">
-            Buy
+            Buy x{{ buyMultiplier }}
           </button>
         </div>
       }
@@ -99,9 +128,10 @@
   <!-- Sidebar droite (log) -->
   <div class="w-1/5 max-w-xs bg-purple-900/80 p-6 flex flex-col shadow-inner backdrop-blur-sm">
     <h3 class="text-xl font-semibold mb-4 text-center">📜 Log</h3>
-    <div class="text-sm text-slate-300 max-h-full overflow-y-auto border-l-4 border-purple-500 pl-4 space-y-1">
-      @for (entry of log; track entry) {
-        <div>{{ entry }}</div>
+    <div class="text-sm pr-4 text-slate-300 max-h-full overflow-y-auto border-l-4 border-purple-500 pl-4 space-y-1">
+      @for (entry of groupedLog; track entry.message) {
+        <div>{{ entry.message }}</div>
+        <br>
       }
     </div>
 
@@ -131,7 +161,7 @@
     [upgIsActive]="upgIsActive"
     [hasVisibleUpgrades]="hasVisibleUpgrades"
     (triggerCast)="onClickMobile()"
-    (buyItem)="buyBuyables($event)"
+    (buyItem)="buyBuyables($event.buyable, $event.multiplier)"
     (buyUpgrade)="buyUpgrade($event)"
     (clearLog)="clearLog()"
     (resetGame)="resetGame()"

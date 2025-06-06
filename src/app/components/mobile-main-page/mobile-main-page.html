@@ -15,10 +15,10 @@
       <div class="flex flex-col justify-center items-center px-4 pt-4 pb-20 h-full">
         <div class="text-3xl text-center m-2">Mana:
           <p class="mt-4">
-          {{  mana | number:'1.1-1' }}
+          {{  mana | numberSuffix }}
           </p>
         </div>
-        <div class="text-lg text-center mb-6">(MPS: {{  totalMPS | number:'1.1-1' }})</div>
+        <div class="text-lg text-center mb-6">(MPS: {{  totalMPS |numberSuffix }})</div>
 
         <div class="flex flex-col justify-center items-center flex-grow w-full"
              (click)="triggerCast.emit()">
@@ -28,40 +28,72 @@
           </div>
 
           <span class="mt-6 text-base text-slate-300">{{ clickPerSecond }} CPS</span>
-          <div class="text-base text-slate-300">Click Power: {{ manaPerClick }}</div>
+          <div class="text-base text-slate-300">Click Power: {{ manaPerClick | numberSuffix }}</div>
 
         </div>
       </div>
     }
 
     @if (activeTab === 'store') {
-      <div class="flex flex-col h-full px-4 pt-4 pb-6">
+      <div class="flex flex-col h-full px-4 pt-4 pb-6 relative">
         <div class="text-center text-3xl font-semibold mb-6">🛒 Store</div>
 
-        <div class="flex-1 overflow-y-auto space-y-4 w-full max-w-5xl mx-auto">
-          @for (gen of buyables; track gen.name) {
-            <div [ngClass]="mana >= gen.cost ? 'bg-purple-900 shadow-lg' : 'bg-purple-700 opacity-90'"
+        <div class="flex-1 overflow-y-auto space-y-4 w-full max-w-5xl mx-auto pb-4">
+          @for (buy of buyables; track buy.name) {
+            <div [ngClass]="mana >= buy.cost ? 'bg-purple-900 shadow-lg' : 'bg-purple-700 opacity-90'"
                  class="p-4 rounded-xl flex justify-between items-center transition-all">
               <div>
-                <div class="font-semibold text-lg">{{ gen.name }}</div>
+                <div class="font-semibold text-lg">{{ buy.name }}</div>
                 <div class="text-sm">
-                  {{ gen.count }} owned |
-                  {{ gen.type === 'click' ? '+' + gen.clickBoost + ' click power' : gen.mps + ' mana/sec' }} |
-                  Cost: {{ gen.cost }}
+                  {{ buy.count }} owned |
+                  {{ buy.type === 'click' ? '+' + buy.clickBoost + ' click power' : (buy.mps | numberSuffix) + ' mana/sec' }}
+                  <br>
+                  | Cost: {{ getTotalBuyCost(buy) | numberSuffix }}
                 </div>
               </div>
 
-              <button (click)="buyItem.emit(gen)"
-                      [disabled]="mana < gen.cost"
+              <button (click)="buyItem.emit({ buyable: buy, multiplier: buyMultiplier })"
+                      [disabled]="mana < getTotalBuyCost(buy)"
                       class="text-white rounded-xl text-base font-semibold px-6 py-4 transition-all
-                         bg-purple-800 hover:bg-purple-600/90 disabled:opacity-40 disabled:cursor-not-allowed">
-                Buy
+                     bg-purple-800 hover:bg-purple-600/90 disabled:opacity-40 disabled:cursor-not-allowed">
+                Buy x{{ buyMultiplier }}
               </button>
             </div>
           }
         </div>
+
+        <div class="sticky z-40 w-full mt-4">
+          <div class="flex justify-center gap-10">
+            <button (click)="setBuyMultiplier(1)"
+                    [ngClass]="{
+                      'bg-purple-600 text-white ring-2 ring-purple-200': buyMultiplier === 1,
+                      'bg-purple-700 text-gray-300': buyMultiplier !== 1
+                    }"
+                    class="px-4 py-3 rounded-lg text-xl font-medium transition">
+              x1
+            </button>
+            <button (click)="setBuyMultiplier(10)"
+                    [ngClass]="{
+                      'bg-purple-600 text-white ring-2 ring-purple-200': buyMultiplier === 10,
+                      'bg-purple-700 text-gray-300': buyMultiplier !== 10
+                    }"
+                    class="px-4 py-3 rounded-lg text-xl font-medium transition">
+              x10
+            </button>
+            <button (click)="setBuyMultiplier(100)"
+                    [ngClass]="{
+                      'bg-purple-600 text-white ring-2 ring-purple-200': buyMultiplier === 100,
+                      'bg-purple-700 text-gray-300': buyMultiplier !== 100
+                    }"
+                    class="px-4 py-3 rounded-lg text-xl font-medium transition">
+              x100
+            </button>
+          </div>
+        </div>
+
       </div>
     }
+
 
     @if (activeTab === 'upgrades') {
       <div class="flex flex-col h-full px-4 pt-4 pb-6">

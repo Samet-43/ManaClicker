@@ -1,30 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import {DecimalPipe, NgClass} from '@angular/common';
-
-interface Buyable {
-  name: string;
-  baseCost: number;
-  cost: number;
-  mps: number;
-  count: number;
-  type: 'buy' | 'click';
-  clickBoost?: number;
-}
-
-interface Upgrade {
-  name: string;
-  description: string;
-  cost: number;
-  type: 'buy' | 'click';
-  target?: string;
-  multiplier: number;
-  purchased: boolean;
-}
+import {NgClass} from '@angular/common';
+import {NumberSuffixPipe} from '../../pipes/number-suffix.pipe';
+import { Buyable, Upgrade } from '../../models/type';
 
 @Component({
   selector: 'app-mobile-main-page',
   standalone: true,
-  imports: [NgClass, DecimalPipe],
+  imports: [NgClass, NumberSuffixPipe],
   templateUrl: './mobile-main-page.html',
   styleUrl: './mobile-main-page.css'
 })
@@ -46,7 +28,7 @@ export class MobileMainPage {
 
   // Événements vers parent
   @Output() triggerCast = new EventEmitter<void>();
-  @Output() buyItem = new EventEmitter<Buyable>();
+  @Output() buyItem = new EventEmitter<{ buyable: Buyable; multiplier: number }>();
   @Output() buyUpgrade = new EventEmitter<Upgrade>();
   @Output() clearLog = new EventEmitter<void>();
   @Output() resetGame = new EventEmitter<void>();
@@ -54,6 +36,25 @@ export class MobileMainPage {
   activeTab: 'mana' | 'store' | 'upgrades' | 'logs' = 'mana';
   showSettings: boolean = false;
 
+  buyMultiplier: number = 1;
+
+  setBuyMultiplier(multi: number): void {
+    this.buyMultiplier = multi;
+  }
+
+  getTotalBuyCost(buyable: Buyable): number {
+    let total = 0;
+    let currentCount = buyable.count;
+
+    for (let i = 0; i < this.buyMultiplier; i++) {
+      const cost = Math.floor(buyable.baseCost * Math.pow(1.15, currentCount));
+      total += cost;
+      currentCount++;
+    }
+
+    return total;
+
+  }
 
   get availableBuyablesCount(): number {
     return this.buyables.filter(buy => this.mana >= buy.cost).length;
