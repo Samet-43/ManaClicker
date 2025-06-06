@@ -29,6 +29,7 @@
 
           <span class="mt-6 text-base text-slate-300">{{ clickPerSecond }} CPS</span>
           <div class="text-base text-slate-300">Click Power: {{ manaPerClick }}</div>
+
         </div>
       </div>
     }
@@ -131,21 +132,36 @@
     </button>
 
     <button (click)="activeTab = 'store'"
-            class="text-center flex-1 py-2 transition rounded-xl"
+            class="relative text-center flex-1 py-2 transition rounded-xl"
             [ngClass]="{
           'bg-purple-800/50': activeTab === 'store',
           'bg-transparent': activeTab !== 'store'
         }">
+
+      @if (availableBuyablesCount > 0) {
+        <span class="absolute top-1 right-2 bg-pink-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
+          {{ availableBuyablesCount }}
+        </span>
+      }
+
+
       <div class="text-2xl">🏪</div>
       <div class="text-sm">Store</div>
     </button>
 
     <button (click)="activeTab = 'upgrades'"
-            class="text-center flex-1 py-2 transition rounded-xl"
+            class="relative text-center flex-1 py-2 transition rounded-xl"
             [ngClass]="{
           'bg-purple-800/50': activeTab === 'upgrades',
           'bg-transparent': activeTab !== 'upgrades'
         }">
+
+      @if (availableUpgradesCount > 0) {
+        <span class="absolute top-1 right-2 bg-pink-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
+          {{ availableUpgradesCount }}
+        </span>
+      }
+
       <div class="text-2xl">📜</div>
       <div class="text-sm">Upgrade</div>
     </button>

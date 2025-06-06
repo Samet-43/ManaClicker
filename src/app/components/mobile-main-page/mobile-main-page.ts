@@ -54,6 +54,17 @@ export class MobileMainPage {
   activeTab: 'mana' | 'store' | 'upgrades' | 'logs' = 'mana';
   showSettings: boolean = false;
 
+
+  get availableBuyablesCount(): number {
+    return this.buyables.filter(buy => this.mana >= buy.cost).length;
+  }
+
+  get availableUpgradesCount(): number {
+    return this.upgrades.filter(
+      upg => this.showUpgrade(upg) && this.canBuyUpgrade(upg)
+    ).length;
+  }
+
   onResetConfirm(): void {
     const confirmReset = window.confirm('⚠️ Are you sure you want to reset your progress?');
     if (confirmReset) {
