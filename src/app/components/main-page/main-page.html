@@ -114,22 +114,26 @@
 
 </div>
 
-<app-mobile-main-page
-  [mana]="mana"
-  [totalMPS]="totalMPS"
-  [clickPerSecond]="clickPerSecond"
-  [manaPerClick]="manaPerClick"
-  [crystalFillPercent]="crystalFillPercent"
-  [buyables]="visibleBuyables"
-  [upgrades]="upgrades"
-  [log]="log"
-  [showUpgrade]="showUpgrade"
-  [canBuyUpgrade]="canBuyUpgrade"
-  [upgIsActive]="upgIsActive"
-  [hasVisibleUpgrades]="hasVisibleUpgrades"
-  (triggerCast)="onClickMobile()"
-  (buyItem)="buyBuyables($event)"
-  (buyUpgrade)="buyUpgrade($event)"
-  (clearLog)="clearLog()"
-  (resetGame)="resetGame()"
-/>
+
+<div class="lg:hidden h-screen w-screen">
+
+  <app-mobile-main-page
+    [mana]="mana"
+    [totalMPS]="totalMPS"
+    [clickPerSecond]="clickPerSecond"
+    [manaPerClick]="manaPerClick"
+    [crystalFillPercent]="crystalFillPercent"
+    [buyables]="visibleBuyables"
+    [upgrades]="upgrades"
+    [log]="log"
+    [showUpgrade]="showUpgrade"
+    [canBuyUpgrade]="canBuyUpgrade"
+    [upgIsActive]="upgIsActive"
+    [hasVisibleUpgrades]="hasVisibleUpgrades"
+    (triggerCast)="onClickMobile()"
+    (buyItem)="buyBuyables($event)"
+    (buyUpgrade)="buyUpgrade($event)"
+    (clearLog)="clearLog()"
+    (resetGame)="resetGame()"
+  />
+</div>
