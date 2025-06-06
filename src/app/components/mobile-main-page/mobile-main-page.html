@@ -106,10 +106,11 @@
                    class="p-4 rounded-xl flex justify-between items-center transition-all">
                 <div>
                   <div class="font-semibold text-lg">
-                    {{ upgrade.name }} -
-                    <span class="text-sm text-slate-300">{{ upgrade.cost }}</span>
-                  </div>
+                    {{ upgrade.name }}
+                    <br>
                   <div class="text-sm text-slate-200">{{ upgrade.description }}</div>
+                  </div>
+                    <span class="text-sm text-slate-300">{{ upgrade.cost | numberSuffix }}</span>
                 </div>
 
                 <button (click)="buyUpgrade.emit(upgrade)"

@@ -120,7 +120,8 @@ export class MainPage implements OnInit {
 
     if (upgrade.type === 'buy' && upgrade.target) {
       const target = this.buyables.find(b => b.name === upgrade.target);
-      return !!target && target.count >= 10;
+      const requiredLevel = upgrade.level ?? 10;
+      return !!target && target.count >= requiredLevel;
     }
 
     return true;

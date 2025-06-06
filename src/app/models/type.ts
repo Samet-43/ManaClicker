@@ -14,6 +14,7 @@ export interface Upgrade {
   cost: number;
   type: 'buy' | 'click';
   target?: string;
+  level?: number;
   multiplier: number;
   purchased: boolean;
 }
